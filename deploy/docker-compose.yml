@@ -1,0 +1,53 @@
+version: '3.5'
+
+services:
+
+  postgres:
+    container_name: postgres_container
+    image: postgres:12-alpine
+    build: ./postgresql
+    env_file:
+      - database.env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  web:
+    
+    image: tomcat:7.0.76
+    build: ./tomcat
+    volumes:
+#      Will be hosted in localhost:8082/app/
+      - ../api/target/api-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/app.war
+    ports:
+      - '8082:8080'
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+       - pgadmin:/root/.pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+    postgres:
+    pgadmin:
